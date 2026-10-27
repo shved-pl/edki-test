@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор ЄДКІ — Юриспруденція</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+            --success: #15803d;
+            --success-bg: #f0fdf4;
+            --error: #b91c1c;
+            --error-bg: #fef2f2;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.6rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #60a5fa;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #e0e7ff;
+            color: #3730a3;
+            margin-bottom: 12px;
+        }
+
+        .scenario {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 14px 18px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1.4;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f0f5ff;
+        }
+
+        .matching-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .matching-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        select {
+            width: 100%;
+            max-width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            background: white;
+            box-sizing: border-box;
+            white-space: normal;
+        }
+
+        .action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 15px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .action-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .feedback.active {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: var(--success-bg);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .feedback.wrong {
+            background: var(--error-bg);
+            border: 1px solid var(--error);
+            color: var(--error);
+        }
+
+        .analysis-box {
+            margin-top: 15px;
+            padding: 14px;
+            background: #f1f5f9;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .nav-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .error-msg {
+            color: var(--error);
+            background: var(--error-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--error);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1 id="test-title">Симулятор ЄДКІ — Юриспруденція</h1>
+        <div id="q-counter">Завантаження...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+    </div>
+
+    <div class="card" id="quiz-card">
+        <div id="error-box" class="error-msg" style="display: none;"></div>
+        <div id="quiz-content">
+            <span class="badge" id="level-badge">Право</span>
+            <div class="scenario" id="scenario-text">Завантаження...</div>
+            <div id="options-container"></div>
+            <button class="action-btn" id="submit-btn" onclick="checkAnswer()">Перевірити відповідь</button>
+            <div class="feedback" id="feedback-box">
+                <div id="feedback-status" style="font-weight: bold; font-size: 1.1rem;"></div>
+                <div class="analysis-box" id="analysis-text"></div>
+                <div style="margin-top: 10px;"><a id="norm-link" href="#" target="_blank" style="color: var(--primary); font-weight: 500;">Посилання на норму права</a></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-controls">
+        <button class="action-btn" id="prev-btn" onclick="prevQuestion()" style="background: #64748b;">Попереднє</button>
+        <button class="action-btn" id="next-btn" onclick="nextQuestion()">Наступне</button>
+    </div>
+</div>
+
+<script>
+    let currentIdx = 0;
+    let questions = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.edkiDatabase !== 'undefined' && Array.isArray(window.edkiDatabase) && window.edkiDatabase.length > 0) {
+            questions = window.edkiDatabase;
+            renderQuestion();
+        } else {
+            showError("Помилка: Файл db_questions.js не знайдено або він містить помилку синтаксису!");
+        }
+    });
+
+    function showError(msg) {
+        document.getElementById('quiz-content').style.display = 'none';
+        const errBox = document.getElementById('error-box');
+        errBox.style.display = 'block';
+        errBox.innerText = msg;
+    }
+
+    function renderQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('q-counter').innerText = `Питання ${currentIdx + 1} з ${questions.length}`;
+        document.getElementById('progress').style.width = `${((currentIdx + 1) / questions.length) * 100}%`;
+        document.getElementById('level-badge').innerText = q.level || 'Юриспруденція';
+        document.getElementById('scenario-text').innerText = q.scenario;
+
+        const optsContainer = document.getElementById('options-container');
+        optsContainer.innerHTML = '';
+        document.getElementById('feedback-box').classList.remove('active', 'correct', 'wrong');
+        document.getElementById('submit-btn').disabled = false;
+
+        if (q.format === 'single') {
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+            for (let key in q.options) {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = `${key}: ${q.options[key]}`;
+                btn.onclick = () => {
+                    document.querySelectorAll('.option-btn').forEach(b => b.style.borderColor = 'var(--border)');
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.dataset.selected = key;
+                };
+                grid.appendChild(btn);
+            }
+            optsContainer.appendChild(grid);
+        } else if (q.format === 'multiple') {
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+            for (let key in q.options) {
+                const label = document.createElement('label');
+                label.className = 'option-btn';
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '10px';
+                label.innerHTML = `<input type="checkbox" value="${key}"> ${key}: ${q.options[key]}`;
+                grid.appendChild(label);
+            }
+            optsContainer.appendChild(grid);
+        } else if (q.format === 'matching') {
+            const container = document.createElement('div');
+            container.className = 'matching-container';
+            for (let lKey in q.leftItems) {
+                const row = document.createElement('div');
+                row.className = 'matching-row';
+                row.innerHTML = `<div><strong>${lKey}.</strong> ${q.leftItems[lKey]}</div>`;
+                
+                const select = document.createElement('select');
+                select.dataset.leftKey = lKey;
+                select.innerHTML = `<option value="">-- Оберіть варіант --</option>` + 
+                    q.rightOptions.map(rKey => `<option value="${rKey}">${rKey}: ${q.rightLabels[rKey]}</option>`).join('');
+                
+                row.appendChild(select);
+                container.appendChild(row);
+            }
+            optsContainer.appendChild(container);
+        }
+
+        document.getElementById('prev-btn').disabled = (currentIdx === 0);
+        document.getElementById('next-btn').disabled = (currentIdx === questions.length - 1);
+    }
+
+    function checkAnswer() {
+        const q = questions[currentIdx];
+        let isCorrect = false;
+
+        if (q.format === 'single') {
+            const selectedBtn = document.querySelector('.option-btn[data-selected]');
+            if (!selectedBtn) return alert('Будь ласка, оберіть варіант відповіді!');
+            const userAns = selectedBtn.dataset.selected;
+            isCorrect = (userAns === q.correct);
+        } else if (q.format === 'multiple') {
+            const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            if (checked.length === 0) return alert('Оберіть хоча б один варіант!');
+            isCorrect = JSON.stringify(checked.sort()) === JSON.stringify(q.correct.sort());
+        } else if (q.format === 'matching') {
+            const selects = document.querySelectorAll('select[data-left-key]');
+            let userMatch = {};
+            selects.forEach(s => userMatch[s.dataset.leftKey] = s.value);
+            isCorrect = JSON.stringify(userMatch) === JSON.stringify(q.correct);
+        }
+
+        const fbBox = document.getElementById('feedback-box');
+        const fbStatus = document.getElementById('feedback-status');
+        fbBox.className = `feedback active ${isCorrect ? 'correct' : 'wrong'}`;
+        fbStatus.innerText = isCorrect ? 'Правильно!' : 'Неправильно!';
+        document.getElementById('analysis-text').innerText = q.analysis || q.hint || '';
+        
+        const link = document.getElementById('norm-link');
+        if (q.linkUrl) {
+            link.href = q.linkUrl;
+            link.innerText = q.linkText || 'Читати норму права';
+            link.style.display = 'inline';
+        } else {
+            link.style.display = 'none';
+        }
+
+        document.getElementById('submit-btn').disabled = true;
+    }
+
+    function nextQuestion() {
+        if (currentIdx < questions.length - 1) {
+            currentIdx++;
+            renderQuestion();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentIdx > 0) {
+            currentIdx--;
+            renderQuestion();
+        }
+    }
+</script>
+<script src="db_questions.js"></script>
+</body>
+</html>
